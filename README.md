@@ -1,4 +1,3 @@
-Claro! Aqui está a documentação da API em formato de texto:
 
 ---
 
