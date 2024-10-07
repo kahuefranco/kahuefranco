@@ -322,4 +322,292 @@ curl --location --request POST '{{API_BASE_URL}}/accounts/{{account_id}}/withdra
 
 ---
 
+Exemplos em Java:
+
+Depósito
+
+```
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ApiExample {
+
+    private static final String AUTH_BASE_URL = "https://oauth2.orionpsp.com";
+    private static final String API_BASE_URL = "https://api.orionpsp.com/api/v1";
+    private static final String CLIENT_ID = "your_client_id";
+    private static final String CLIENT_SECRET = "your_client_secret";
+
+    public static void main(String[] args) throws Exception {
+        String accessToken = authenticate();
+        if (accessToken != null) {
+            deposit(accessToken, "your_account_id");
+        }
+    }
+
+    private static String authenticate() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String requestBody = "client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&grant_type=client_credentials";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(AUTH_BASE_URL + "/auth/realms/digital-banking/protocol/openid-connect/token"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Auth Response: " + response.body());
+
+        // Extract the access token from the response (parsing logic omitted for brevity)
+        return "extracted_access_token"; // Placeholder for actual token extraction
+    }
+
+    private static void deposit(String accessToken, String accountId) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String requestBody = "{ \"type\": \"PIX\", \"amount\": 100, \"currency\": \"BRL\", \"customer\": { \"identify\": { \"type\": \"CPF\", \"number\": \"12345678900\" }, \"name\": \"Test User Name\", \"email\": \"test@hokmapay.com\", \"phone\": \"75991435892\", \"address\": { \"zipCode\": \"38082365\" } } } }";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/accounts/" + accountId + "/payments"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .POST(BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Deposit Response: " + response.body());
+    }
+}
+```
+
+Saques
+
+```
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublishers;
+
+public class ApiExample {
+
+    private static final String API_BASE_URL = "https://api.orionpsp.com/api/v1";
+
+    public static void main(String[] args) throws Exception {
+        String accessToken = "your_access_token"; // Supondo que você já tenha o token
+        withdraw(accessToken, "your_account_id");
+    }
+
+    private static void withdraw(String accessToken, String accountId) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String requestBody = "{ \"type\": \"PIX\", \"dictKey\": \"DICT-EVP-TYPE-12341-1233-2323-2323131231\", \"dictType\": \"EVP\", \"amount\": 100, \"currency\": \"BRL\", \"customer\": { \"identify\": { \"type\": \"CPF\", \"number\": \"12345678900\" }, \"name\": \"Test User Name\", \"email\": \"test@hokmapay.com\", \"phone\": \"112345677\", \"address\": { \"zipCode\": \"38082365\" } } } }";
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/accounts/" + accountId + "/withdraw"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .POST(BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Withdraw Response: " + response.body());
+    }
+}
+```
+
+Recebimento de eventos
+
+```
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class ApiExample {
+
+    private static final String API_BASE_URL = "https://api.orionpsp.com/api/v1";
+
+    public static void main(String[] args) throws Exception {
+        String accessToken = "your_access_token"; // Supondo que você já tenha o token
+        String accountId = "your_account_id"; // Seu ID de conta
+        receiveEvents(accessToken, accountId);
+    }
+
+    private static void receiveEvents(String accessToken, String accountId) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/accounts/" + accountId + "/events"))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Events Response: " + response.body());
+    }
+}
+```
+
+Exemplos em PHP
+
+Depositos
+
+```
+<?php
+
+$authBaseUrl = "https://oauth2.orionpsp.com";
+$apiBaseUrl = "https://api.orionpsp.com/api/v1";
+$clientId = "your_client_id";
+$clientSecret = "your_client_secret";
+
+function authenticate($authBaseUrl, $clientId, $clientSecret) {
+    $url = "$authBaseUrl/auth/realms/digital-banking/protocol/openid-connect/token";
+    $data = [
+        'client_id' => $clientId,
+        'client_secret' => $clientSecret,
+        'grant_type' => 'client_credentials',
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/x-www-form-urlencoded',
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $result = json_decode($response, true);
+    return $result['access_token'] ?? null;
+}
+
+function deposit($apiBaseUrl, $accessToken, $accountId) {
+    $url = "$apiBaseUrl/accounts/$accountId/payments";
+    $data = [
+        'type' => 'PIX',
+        'amount' => 100,
+        'currency' => 'BRL',
+        'customer' => [
+            'identify' => [
+                'type' => 'CPF',
+                'number' => '12345678900'
+            ],
+            'name' => 'Test User Name',
+            'email' => 'test@hokmapay.com',
+            'phone' => '75991435892',
+            'address' => [
+                'zipCode' => '38082365'
+            ]
+        ]
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $accessToken,
+        'Content-Type: application/json',
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
+
+// Uso das funções
+$accessToken = authenticate($authBaseUrl, $clientId, $clientSecret);
+if ($accessToken) {
+    $depositResponse = deposit($apiBaseUrl, $accessToken, 'your_account_id');
+    print_r($depositResponse);
+}
+```
+Saques
+
+```
+<?php
+
+function withdraw($apiBaseUrl, $accessToken, $accountId) {
+    $url = "$apiBaseUrl/accounts/$accountId/withdraw";
+    $data = [
+        'type' => 'PIX',
+        'dictKey' => 'DICT-EVP-TYPE-12341-1233-2323-2323131231',
+        'dictType' => 'EVP',
+        'amount' => 100,
+        'currency' => 'BRL',
+        'customer' => [
+            'identify' => [
+                'type' => 'CPF',
+                'number' => '12345678900'
+            ],
+            'name' => 'Test User Name',
+            'email' => 'test@hokmapay.com',
+            'phone' => '112345677',
+            'address' => [
+                'zipCode' => '38082365'
+            ]
+        ]
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $accessToken,
+        'Content-Type: application/json',
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
+
+// Uso da função
+$accessToken = "your_access_token"; // Supondo que você já tenha o token
+$withdrawResponse = withdraw($apiBaseUrl, $accessToken, 'your_account_id');
+print_r($withdrawResponse);
+?>
+```
+
+Recebimento de eventos
+
+```
+<?php
+
+function receiveEvents($apiBaseUrl, $accessToken, $accountId) {
+    $url = "$apiBaseUrl/accounts/$accountId/events";
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Authorization: Bearer ' . $accessToken,
+        'Content-Type: application/json',
+    ]);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
+
+// Uso da função
+$accessToken = "your_access_token"; // Supondo que você já tenha o token
+$eventsResponse = receiveEvents($apiBaseUrl, $accessToken, 'your_account_id');
+print_r($eventsResponse);
+?>
+```
+
+
+
+
 Se precisar de mais alguma coisa ou de alguma parte específica dessa documentação, é só avisar!
